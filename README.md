@@ -36,7 +36,7 @@ Available subcommands:
 Run "startr help" to see global options.
 ```
 
-## path
+### path
 
 ```
 startr clone path <directory>
@@ -48,7 +48,7 @@ Usage: startr clone path <directory>
 
 Run "startr help" to see global options.
 ```
-## git
+### git
 
 ```
 startr clone git <uri>
