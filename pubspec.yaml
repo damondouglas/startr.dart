@@ -3,7 +3,8 @@ version: 0.0.1
 description: Clones template snippets into project.
 author: Damon Douglas <douglas.damon@gmail.com>
 homepage: https://github.com/damondouglas/startr.dart
-
+executables:
+  startr: 
 environment:
   sdk: '>=1.0.0 <2.0.0'
 

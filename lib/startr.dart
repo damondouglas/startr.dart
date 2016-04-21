@@ -4,7 +4,6 @@
 library startr;
 
 import 'package:args/command_runner.dart';
-import 'package:logging/logging.dart' as logging;
 import 'package:startr/command.dart';
 import 'dart:io';
 
