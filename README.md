@@ -2,7 +2,9 @@
 
 # About
 
-Clones template snippets into project.
+Clones template snippets into project.  Insert __<variable>__ anywhere into your template and `startr` will find and prompt you for replacements.
+
+![startr](https://cloud.githubusercontent.com/assets/762456/14730897/e4db6220-07ff-11e6-8ab1-33812db58315.gif)
 
 # Usage
 
