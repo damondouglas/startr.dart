@@ -229,8 +229,6 @@ abstract class Templatable {
       });
 
   /// Renames [variablePathMap] according to [replacementMap].
-  ///
-  /// Checks first whether new renamed path already exists and prompts user accordingly.
   Future<Map<String, List>> renameTemplateFiles(
           Map<String, String> replacementMap,
           Map<String, List> variablePathMap) =>
