@@ -65,6 +65,10 @@ main() {
             variablePathMap['__projectName__'].contains('pubspec.yaml'), true);
         expect(
             variablePathMap['__projectName__'].contains('bin/main.dart'), true);
+        expect(
+            variablePathMap['__projectName__']
+                .contains('lib/__projectName__.dart'),
+            true);
 
         expect(variablePathMap.keys.contains('__foo__'), true);
         expect(variablePathMap['__foo__'].contains('bin/main.dart'), true);
@@ -76,7 +80,7 @@ main() {
         expect(variablePathMap['__email__'].contains('pubspec.yaml'), true);
       });
 
-      group('replaceContent', () {
+      group('replaceContent and renameTemplateFiles', () {
         var projectName = random.randomAlphaNumeric(10);
         var author = random.randomAlpha(10) + ' ' + random.randomAlpha(10);
         var email = random.randomAlpha(10) + "@example.com";
@@ -87,7 +91,9 @@ main() {
           '__email__': email,
           '__foo__': foo
         };
-        setUp(() {
+        setUp(() async {
+          variablePathMap = await command.renameTemplateFiles(
+              replacementMap, variablePathMap);
           return command.replaceContent(replacementMap, variablePathMap);
         });
 
@@ -105,6 +111,13 @@ main() {
           var mainScript = await mainFile.readAsString();
           expect(mainScript.contains(foo), true);
           expect(mainScript.contains(projectName), true);
+
+          var projectLibFile =
+              new File(path.join(temporaryDir.path, 'lib/$projectName.dart'));
+
+          expect(projectLibFile.existsSync(), true);
+          var projectLibContent = await projectLibFile.readAsString();
+          expect(projectLibContent.contains(projectName), true);
         });
       });
     });
@@ -121,7 +134,9 @@ class TestStartrSubCommand extends Object with command.Templatable {
         var contentMap = {
           path.join(temporaryDirectory.path, 'pubspec.yaml'): pubspec,
           path.join(temporaryDirectory.path, '.gitignore'): gitignore,
-          path.join(temporaryDirectory.path, 'bin/main.dart'): mainScript
+          path.join(temporaryDirectory.path, 'bin/main.dart'): mainScript,
+          path.join(temporaryDirectory.path, 'lib/__projectName__.dart'):
+              projectlib
         };
 
         await Future.wait(contentMap.keys.map((String path) async {
@@ -134,6 +149,12 @@ class TestStartrSubCommand extends Object with command.Templatable {
         return temporaryDirectory;
       });
 }
+
+final projectlib = """
+library __projectName__;
+
+String foo(String bar) => bar.toUpperCase();
+""";
 
 final pubspec = """
 name: __projectName__

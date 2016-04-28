@@ -17,7 +17,9 @@ class CloneCommand extends Command {
 }
 
 abstract class CloneSubcommand extends Command with Templatable {
-  String get uri => argResults.rest.isNotEmpty ? AliasConfig.getUriFromAlias(argResults.rest.first) : null;
+  String get uri => argResults.rest.isNotEmpty
+      ? AliasConfig.getUriFromAlias(argResults.rest.first)
+      : null;
 
   Future setUp() => new Future(() {
         targetDirectory = new Directory('.');
@@ -45,6 +47,8 @@ abstract class CloneSubcommand extends Command with Templatable {
         var variablePathMap = await findTemplateVariables(temporaryDirectory);
         var replacementMap =
             await getTemplateVariableReplacements(variablePathMap.keys);
+        variablePathMap =
+            await renameTemplateFiles(replacementMap, variablePathMap);
         await replaceContent(replacementMap, variablePathMap);
         await deployContent();
       });
@@ -91,24 +95,26 @@ class GitCommand extends CloneSubcommand with Templatable {
   final invocation = "startr clone git <uri>";
 
   Future<Directory> cloneSourceIntoTemporaryDirectory(String sourceUriPath) =>
-    new Future(() async {
-      var isValidGitUrl = await getIsValidGitUri(sourceUriPath);
-      if (isValidGitUrl) {
-        await _cloneGitIntoTemporaryDirectory(sourceUriPath);
-      } else throw new UsageException('$sourceUriPath is not a valid git url', this.usage);
-    });
+      new Future(() async {
+        var isValidGitUrl = await getIsValidGitUri(sourceUriPath);
+        if (isValidGitUrl) {
+          await _cloneGitIntoTemporaryDirectory(sourceUriPath);
+        } else
+          throw new UsageException(
+              '$sourceUriPath is not a valid git url', this.usage);
+      });
 
-  Future _cloneGitIntoTemporaryDirectory(String sourceUriPath) => git.runGit(['clone', sourceUriPath, temporaryDirectory.path]);
+  Future _cloneGitIntoTemporaryDirectory(String sourceUriPath) =>
+      git.runGit(['clone', sourceUriPath, temporaryDirectory.path]);
 
   Future<bool> getIsValidGitUri(sourceUriPath) => new Future(() async {
-    try {
-      var result = await git.runGit(['ls-remote', sourceUriPath]);
-      return result.stdout.contains('HEAD');
-    } catch(e) {
-      return false;
-    }
-  });
-
+        try {
+          var result = await git.runGit(['ls-remote', sourceUriPath]);
+          return result.stdout.contains('HEAD');
+        } catch (e) {
+          return false;
+        }
+      });
 }
 
 abstract class Templatable {
@@ -145,6 +151,20 @@ abstract class Templatable {
         await Future.forEach(fileList, (File file) async {
           var relativePath =
               path.relative(file.path, from: sourceDirectory.path);
+
+          var fileName = path.basenameWithoutExtension(relativePath);
+          if (_variableRegExp.hasMatch(fileName)) {
+            var variableMatches = _variableRegExp.allMatches(fileName);
+            variableMatches.forEach((Match match) {
+              var variableName = match.group(0);
+              if (!variablePathMap.containsKey(variableName))
+                variablePathMap[variableName] = [];
+
+              if (!variablePathMap[variableName].contains(relativePath))
+                variablePathMap[variableName].add(relativePath);
+            });
+          }
+
           try {
             var content = await file.readAsString();
             if (_variableRegExp.hasMatch(content)) {
@@ -153,7 +173,9 @@ abstract class Templatable {
                 var variableName = match.group(0);
                 if (!variablePathMap.containsKey(variableName))
                   variablePathMap[variableName] = [];
-                variablePathMap[variableName].add(relativePath);
+
+                if (!variablePathMap[variableName].contains(relativePath))
+                  variablePathMap[variableName].add(relativePath);
               });
             }
           } catch (e) {
@@ -204,6 +226,36 @@ abstract class Templatable {
           var content = contentMap[pathStr];
           return f.writeAsString(content);
         });
+      });
+
+  /// Renames [variablePathMap] according to [replacementMap].
+  ///
+  /// Checks first whether new renamed path already exists and prompts user accordingly.
+  Future<Map<String, List>> renameTemplateFiles(
+          Map<String, String> replacementMap,
+          Map<String, List> variablePathMap) =>
+      new Future(() async {
+        await Future.forEach(variablePathMap.keys, (String variableName) async {
+          var pathList = variablePathMap[variableName];
+          var newPathList = [];
+          await Future.forEach(pathList, (String pathStr) async {
+            if (pathStr.contains(variableName)) {
+              var f = new File(path.join(temporaryDirectory.path, pathStr));
+              if (f.existsSync()) {
+                var newPathStr = pathStr.replaceAll(
+                    variableName, replacementMap[variableName]);
+                var fullNewPathStr =
+                    path.join(temporaryDirectory.path, newPathStr);
+                await f.rename(fullNewPathStr);
+                newPathList.add(newPathStr);
+              }
+            } else {
+              newPathList.add(pathStr);
+            }
+          });
+          variablePathMap[variableName] = newPathList;
+        });
+        return variablePathMap;
       });
 
   /// Copies content from [temporaryDirectory] into [targetDirectory].
