@@ -16,6 +16,8 @@ See [console-simple.dart](https://github.com/damondouglas/console-simple.dart) f
 
 `$ startr clone git git@github.com:damondouglas/console-simple.dart.git`
 
+see list of community startrs here:  https://github.com/damondouglas/startr.dart/wiki
+
 # Usage
 
 ```
