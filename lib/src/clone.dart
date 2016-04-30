@@ -144,7 +144,7 @@ abstract class Templatable {
   /// Template variables obey the syntax __<variable name>__.  Returns a [Map] of <variable name> to a [List] of paths.
   Future<Map<String, List>> findTemplateVariables(Directory sourceDirectory) =>
       new Future(() async {
-        print("Searching for __<variable>__ ...");
+        print("Searching for __<variable>__ in file names and content ...");
         var variablePathMap = {};
 
         var fileList = await list(sourceDirectory).toList();
@@ -233,27 +233,39 @@ abstract class Templatable {
           Map<String, String> replacementMap,
           Map<String, List> variablePathMap) =>
       new Future(() async {
-        await Future.forEach(variablePathMap.keys, (String variableName) async {
-          var pathList = variablePathMap[variableName];
-          var newPathList = [];
-          await Future.forEach(pathList, (String pathStr) async {
-            if (pathStr.contains(variableName)) {
-              var f = new File(path.join(temporaryDirectory.path, pathStr));
-              if (f.existsSync()) {
-                var newPathStr = pathStr.replaceAll(
-                    variableName, replacementMap[variableName]);
-                var fullNewPathStr =
-                    path.join(temporaryDirectory.path, newPathStr);
-                await f.rename(fullNewPathStr);
-                newPathList.add(newPathStr);
-              }
-            } else {
-              newPathList.add(pathStr);
-            }
+        // search for files matching __<variable name>__ pattern.
+        var filePathSet = new Set();
+        variablePathMap.values
+            .forEach((List pathList) => filePathSet.addAll(pathList));
+
+        // change the file names
+        // change variablePathMap
+        var pathReplacementMap = {};
+
+        filePathSet.forEach((String pathStr) {
+          var replacePathTo = pathStr;
+          replacementMap
+              .forEach((String variableName, String replaceVariableTo) {
+            replacePathTo =
+                replacePathTo.replaceAll(variableName, replaceVariableTo);
           });
-          variablePathMap[variableName] = newPathList;
+          pathReplacementMap[pathStr] = replacePathTo;
         });
-        return variablePathMap;
+
+        var newVariablePathMap = {};
+        variablePathMap.forEach((String variableName, List pathStrList) {
+          newVariablePathMap[variableName] =
+              pathStrList.map((String pathStr) => pathReplacementMap[pathStr]);
+        });
+
+        await Future.forEach(pathReplacementMap.keys, (String pathStr) async {
+          var f = new File(path.join(temporaryDirectory.path, pathStr));
+          if (f.existsSync())
+            await f.rename(path.join(
+                temporaryDirectory.path, pathReplacementMap[pathStr]));
+        });
+
+        return newVariablePathMap;
       });
 
   /// Copies content from [temporaryDirectory] into [targetDirectory].

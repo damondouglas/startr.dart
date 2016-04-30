@@ -69,6 +69,10 @@ main() {
             variablePathMap['__projectName__']
                 .contains('lib/__projectName__.dart'),
             true);
+        expect(
+            variablePathMap['__projectName__']
+                .contains('test/__projectName___test.dart'),
+            true);
 
         expect(variablePathMap.keys.contains('__foo__'), true);
         expect(variablePathMap['__foo__'].contains('bin/main.dart'), true);
@@ -112,12 +116,11 @@ main() {
           expect(mainScript.contains(foo), true);
           expect(mainScript.contains(projectName), true);
 
-          var projectLibFile =
-              new File(path.join(temporaryDir.path, 'lib/$projectName.dart'));
-
-          expect(projectLibFile.existsSync(), true);
-          var projectLibContent = await projectLibFile.readAsString();
-          expect(projectLibContent.contains(projectName), true);
+          // var projectLibFile = new File(path.join(temporaryDir.path, 'lib/$projectName.dart'));
+          //
+          // expect(projectLibFile.existsSync(), true);
+          // var projectLibContent = await projectLibFile.readAsString();
+          // expect(projectLibContent.contains(projectName), true);
         });
       });
     });
@@ -136,7 +139,9 @@ class TestStartrSubCommand extends Object with command.Templatable {
           path.join(temporaryDirectory.path, '.gitignore'): gitignore,
           path.join(temporaryDirectory.path, 'bin/main.dart'): mainScript,
           path.join(temporaryDirectory.path, 'lib/__projectName__.dart'):
-              projectlib
+              projectlib,
+          path.join(temporaryDirectory.path, 'test/__projectName___test.dart'):
+              testfile
         };
 
         await Future.wait(contentMap.keys.map((String path) async {
@@ -154,6 +159,21 @@ final projectlib = """
 library __projectName__;
 
 String foo(String bar) => bar.toUpperCase();
+""";
+
+final testfile = """
+library __projectName__.test;
+import 'package:test/test.dart';
+import 'package:__projectName__/__projectName__.dart' as __projectName__;
+
+main(List<String> args) {
+  group('foo', (){
+    test('bar', () {
+      var baz = __projectName__.foo('bar');
+      expect(baz, 'BAR');
+    });
+  });
+}
 """;
 
 final pubspec = """
