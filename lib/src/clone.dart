@@ -329,16 +329,20 @@ abstract class Templatable {
         .where((FileSystemEntity fse) => !_ignore(fse));
   }
 
+  List<String> readStartrIgnoreList({String pathToStartrIgnore: '.startrignore'}) {
+    var ignoreList = [
+      '.startrignore'
+    ];
+
+    var f = new File(pathToStartrIgnore);
+    if (f.existsSync()) ignoreList.addAll(f.readAsLinesSync());
+
+    return ignoreList;
+  }
+
   _ignore(File file) {
-    return [
-      'packages/',
-      '.packages',
-      '.pub/',
-      'pubspec.lock',
-      '.git/',
-      '.gitignore'
-    ]
-        .map((String pattern) => new RegExp(pattern))
-        .any((RegExp regex) => regex.hasMatch(file.path));
+    readStartrIgnoreList()
+      .map((String pattern) => new RegExp(pattern))
+      .any((RegExp regex) => regex.hasMatch(file.path));
   }
 }
