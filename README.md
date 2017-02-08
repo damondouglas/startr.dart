@@ -7,6 +7,7 @@ Clones template snippets into project.  Insert __<variable>__ anywhere into your
 ![startr](https://cloud.githubusercontent.com/assets/762456/14730897/e4db6220-07ff-11e6-8ab1-33812db58315.gif)
 
 # Install
+Install [dartlang](https://www.dartlang.org), then:
 
 `$ pub global activate startr`
 
