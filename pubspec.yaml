@@ -1,5 +1,5 @@
 name: startr
-version: 0.2.0
+version: 0.2.2
 description: Clones template snippets into project.
 author: Damon Douglas <douglas.damon@gmail.com>
 homepage: https://github.com/damondouglas/startr.dart
