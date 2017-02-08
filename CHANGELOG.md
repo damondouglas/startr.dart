@@ -1,3 +1,6 @@
+## 0.2.3
+- Fix that .git was not ignored.
+
 ## 0.2.2
 - Fix .startrignore to be ignored.
 
