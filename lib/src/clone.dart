@@ -121,8 +121,10 @@ abstract class Templatable {
 
   List<String> get pathsToIgnore => (){
     var pathToStartrIgnore = '.startrignore';
+    var dotgit = '.git';
     var ignoreList = [
-      pathToStartrIgnore
+      pathToStartrIgnore,
+      dotgit
     ];
 
     var f = new File(pathToStartrIgnore);
